@@ -1,33 +1,13 @@
 const express = require("express");
 const router = express.Router();
-const { protect, authorize } = require("../middleware/auth");
-const categoryController = require("../controllers/categoryController");
+const { protect } = require("../middleware/auth");
+const cartController = require("../controllers/cartController");
 
-// Public routes
-router.get("/", categoryController.getCategories);
-router.get("/tree", categoryController.getCategoryTree);
-router.get("/featured", categoryController.getFeaturedCategories);
-router.get("/slug/:slug", categoryController.getCategoryBySlug);
-router.get("/:id", categoryController.getCategory);
-
-// Protected routes - Admin only
-router.post(
-  "/",
-  protect,
-  authorize("admin"),
-  categoryController.createCategory
-);
-router.put(
-  "/:id",
-  protect,
-  authorize("admin"),
-  categoryController.updateCategory
-);
-router.delete(
-  "/:id",
-  protect,
-  authorize("admin"),
-  categoryController.deleteCategory
-);
+// All cart routes are protected - require login
+router.get("/", protect, cartController.getUserCart);
+router.post("/", protect, cartController.addItemToCart);
+router.put("/:itemId", protect, cartController.updateCartItem);
+router.delete("/:itemId", protect, cartController.removeCartItem);
+router.delete("/", protect, cartController.clearCart);
 
 module.exports = router;

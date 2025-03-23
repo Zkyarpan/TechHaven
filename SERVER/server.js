@@ -19,6 +19,7 @@ const orderRoutes = require("./routes/orders");
 const categoryRoutes = require("./routes/categories");
 const reviewRoutes = require("./routes/reviews");
 const cartRoutes = require("./routes/cart");
+const userRoutes = require("./routes/auth");
 
 // Initialize Express app
 const app = express();
@@ -30,7 +31,12 @@ const connectDB = require("./config/db");
 connectDB();
 
 // Security: Add Helmet middleware for security headers
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: false, // Disable CSP for development
+    crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow cross-origin resource sharing
+  })
+);
 
 // Rate limiting for auth routes to prevent brute force
 const authLimiter = rateLimit({
@@ -129,6 +135,7 @@ const createUploadDirs = () => {
     path.join(__dirname, "public", "uploads", "laptops"),
     path.join(__dirname, "public", "uploads", "categories"),
     path.join(__dirname, "public", "uploads", "reviews"),
+    path.join(__dirname, "public", "uploads", "users"),
   ];
 
   dirs.forEach((dir) => {
@@ -148,6 +155,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/cart", cartRoutes);
+app.use("/api/users", userRoutes);
 
 // Basic route
 app.get("/", (req, res) => {
@@ -162,6 +170,7 @@ app.get("/", (req, res) => {
       categories: "/api/categories - Category management endpoints",
       reviews: "/api/reviews - Review management endpoints",
       cart: "/api/cart - Shopping cart endpoints",
+      users: "/api/users - User management endpoints",
       health: "/health - API health check",
     },
   });
@@ -174,6 +183,8 @@ app.get("/health", (req, res) => {
     message: "TechHaven API is running",
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || "development",
+    database:
+      mongoose.connection.readyState === 1 ? "connected" : "disconnected",
   });
 });
 
@@ -215,9 +226,30 @@ app.use((err, req, res, next) => {
 // Graceful shutdown handling
 process.on("SIGTERM", () => {
   console.log("SIGTERM received, shutting down gracefully");
-  app.close(() => {
-    console.log("Process terminated");
+  mongoose.connection.close(() => {
+    console.log("MongoDB connection closed");
+    server.close(() => {
+      console.log("Process terminated");
+      process.exit(0);
+    });
   });
+});
+
+process.on("SIGINT", () => {
+  console.log("SIGINT received, shutting down gracefully");
+  mongoose.connection.close(() => {
+    console.log("MongoDB connection closed");
+    server.close(() => {
+      console.log("Process terminated");
+      process.exit(0);
+    });
+  });
+});
+
+// Handle unhandled promise rejections
+process.on("unhandledRejection", (err) => {
+  console.error("Unhandled Promise Rejection:", err);
+  // Don't crash the server, just log the error
 });
 
 // Start server

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "./context/AuthContext";
-import api from "./utils/api";
+import api from "./utils/apiService.jsx";
 
 const Dashboard = () => {
   const [bookings, setBookings] = useState([]);

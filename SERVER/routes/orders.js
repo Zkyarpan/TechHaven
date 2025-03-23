@@ -3,14 +3,6 @@ const router = express.Router();
 const { protect, authorize } = require("../middleware/auth");
 const orderController = require("../controllers/orderController");
 
-// User routes - requires authentication
-router.get("/", protect, orderController.getUserOrders);
-router.post("/", protect, orderController.createOrder);
-router.get("/:id", protect, orderController.getOrder);
-router.put("/:id/pay", protect, orderController.updateOrderToPaid);
-router.put("/:id/cancel", protect, orderController.cancelOrder);
-
-// Admin only routes
 router.get(
   "/admin",
   protect,
@@ -29,6 +21,15 @@ router.get(
   authorize("admin"),
   orderController.getTotalSales
 );
+
+// User routes - requires authentication
+router.get("/", protect, orderController.getUserOrders);
+router.post("/", protect, orderController.createOrder);
+
+// Routes with :id parameter - THESE MUST COME AFTER specific routes
+router.get("/:id", protect, orderController.getOrder);
+router.put("/:id/pay", protect, orderController.updateOrderToPaid);
+router.put("/:id/cancel", protect, orderController.cancelOrder);
 router.put(
   "/:id/status",
   protect,

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { roomService, bookingService } from "../components/utils/api";
+import { roomService, bookingService } from "./utils/apiService.jsx";
 import { toast } from "sonner";
 import {
   getRoomImage,

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { bookingService } from "../components/utils/api";
+import { bookingService } from "./utils/apiService.jsx";
 import { toast } from "sonner";
 import {
   getRoomImage,

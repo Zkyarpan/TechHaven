@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import apiService from "../utils/apiService";
 import {
   Search,
   Filter,
@@ -17,10 +18,12 @@ import {
   Mail,
   Edit,
 } from "lucide-react";
+import { toast } from "sonner";
 
 const OrderManagement = () => {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
@@ -30,267 +33,23 @@ const OrderManagement = () => {
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [bulkActionOpen, setBulkActionOpen] = useState(false);
 
+  // Fetch orders from API
   useEffect(() => {
-    // Simulate API fetch
-    setTimeout(() => {
-      // Mock data - in a real app, this would come from an API
-      const mockOrders = [
-        {
-          id: "ORD-2023-0012",
-          date: "March 15, 2025",
-          timestamp: "2025-03-15T10:30:00Z",
-          customer: {
-            name: "John Doe",
-            email: "john.doe@example.com",
-            phone: "+1 (555) 123-4567",
-          },
-          items: [
-            { id: 1, name: "MacBook Pro M3", quantity: 1, price: 1999.99 },
-          ],
-          subtotal: 1999.99,
-          tax: 160.0,
-          shipping: 0,
-          total: 2159.99,
-          status: "delivered",
-          payment: {
-            method: "Credit Card",
-            status: "paid",
-            transactionId: "txn_12345",
-          },
-          shippingInfo: {
-            method: "Standard Shipping",
-            trackingNumber: "TRK98765432",
-            estimatedDelivery: "March 18, 2025",
-            address: "123 Main St, New York, NY 10001, USA",
-          },
-          notes: "",
-        },
-        {
-          id: "ORD-2023-0011",
-          date: "March 14, 2025",
-          timestamp: "2025-03-14T09:15:00Z",
-          customer: {
-            name: "Jane Smith",
-            email: "jane.smith@example.com",
-            phone: "+1 (555) 987-6543",
-          },
-          items: [
-            { id: 2, name: "Dell XPS 13", quantity: 1, price: 1499.99 },
-            { id: 15, name: "External Monitor", quantity: 1, price: 349.99 },
-          ],
-          subtotal: 1849.98,
-          tax: 148.0,
-          shipping: 29.99,
-          total: 2027.97,
-          status: "shipped",
-          payment: {
-            method: "PayPal",
-            status: "paid",
-            transactionId: "txn_67890",
-          },
-          shippingInfo: {
-            method: "Express Shipping",
-            trackingNumber: "TRK87654321",
-            estimatedDelivery: "March 16, 2025",
-            address: "456 Elm St, Los Angeles, CA 90001, USA",
-          },
-          notes: "Customer requested gift wrapping",
-        },
-        {
-          id: "ORD-2023-0010",
-          date: "March 13, 2025",
-          timestamp: "2025-03-13T14:20:00Z",
-          customer: {
-            name: "Robert Johnson",
-            email: "robert.j@example.com",
-            phone: "+1 (555) 456-7890",
-          },
-          items: [
-            { id: 3, name: "Lenovo ThinkPad X1", quantity: 1, price: 1699.99 },
-          ],
-          subtotal: 1699.99,
-          tax: 136.0,
-          shipping: 0,
-          total: 1835.99,
-          status: "processing",
-          payment: {
-            method: "Credit Card",
-            status: "paid",
-            transactionId: "txn_23456",
-          },
-          shippingInfo: {
-            method: "Standard Shipping",
-            trackingNumber: "",
-            estimatedDelivery: "March 20, 2025",
-            address: "789 Oak St, Chicago, IL 60007, USA",
-          },
-          notes: "",
-        },
-        {
-          id: "ORD-2023-0009",
-          date: "March 12, 2025",
-          timestamp: "2025-03-12T11:45:00Z",
-          customer: {
-            name: "Emily Williams",
-            email: "emily.w@example.com",
-            phone: "+1 (555) 789-0123",
-          },
-          items: [
-            { id: 4, name: "HP Spectre x360", quantity: 1, price: 1399.99 },
-            { id: 16, name: "Laptop Bag", quantity: 1, price: 79.99 },
-          ],
-          subtotal: 1479.98,
-          tax: 118.4,
-          shipping: 0,
-          total: 1598.38,
-          status: "pending",
-          payment: {
-            method: "Bank Transfer",
-            status: "pending",
-            transactionId: "",
-          },
-          shippingInfo: {
-            method: "Standard Shipping",
-            trackingNumber: "",
-            estimatedDelivery: "Pending Payment",
-            address: "101 Pine St, Seattle, WA 98101, USA",
-          },
-          notes: "Waiting for payment confirmation",
-        },
-        {
-          id: "ORD-2023-0008",
-          date: "March 11, 2025",
-          timestamp: "2025-03-11T16:30:00Z",
-          customer: {
-            name: "Michael Brown",
-            email: "michael.b@example.com",
-            phone: "+1 (555) 234-5678",
-          },
-          items: [
-            { id: 5, name: "ASUS ROG Zephyrus", quantity: 1, price: 1799.99 },
-          ],
-          subtotal: 1799.99,
-          tax: 144.0,
-          shipping: 49.99,
-          total: 1993.98,
-          status: "cancelled",
-          payment: {
-            method: "Credit Card",
-            status: "refunded",
-            transactionId: "txn_34567",
-          },
-          shippingInfo: {
-            method: "Next Day Delivery",
-            trackingNumber: "",
-            estimatedDelivery: "Cancelled",
-            address: "202 Maple St, Austin, TX 78701, USA",
-          },
-          notes: "Customer requested cancellation",
-        },
-        {
-          id: "ORD-2023-0007",
-          date: "March 10, 2025",
-          timestamp: "2025-03-10T10:15:00Z",
-          customer: {
-            name: "Sarah Davis",
-            email: "sarah.d@example.com",
-            phone: "+1 (555) 345-6789",
-          },
-          items: [
-            { id: 6, name: "Apple MacBook Air", quantity: 1, price: 1199.99 },
-            { id: 17, name: "Apple Magic Mouse", quantity: 1, price: 99.99 },
-            { id: 18, name: "USB-C Hub", quantity: 1, price: 49.99 },
-          ],
-          subtotal: 1349.97,
-          tax: 108.0,
-          shipping: 0,
-          total: 1457.97,
-          status: "delivered",
-          payment: {
-            method: "Credit Card",
-            status: "paid",
-            transactionId: "txn_45678",
-          },
-          shippingInfo: {
-            method: "Standard Shipping",
-            trackingNumber: "TRK76543210",
-            estimatedDelivery: "March 15, 2025",
-            address: "303 Cedar St, Boston, MA 02108, USA",
-          },
-          notes: "",
-        },
-        {
-          id: "ORD-2023-0006",
-          date: "March 9, 2025",
-          timestamp: "2025-03-09T13:40:00Z",
-          customer: {
-            name: "David Miller",
-            email: "david.m@example.com",
-            phone: "+1 (555) 456-7890",
-          },
-          items: [
-            {
-              id: 7,
-              name: "Microsoft Surface Laptop",
-              quantity: 1,
-              price: 1299.99,
-            },
-          ],
-          subtotal: 1299.99,
-          tax: 104.0,
-          shipping: 29.99,
-          total: 1433.98,
-          status: "shipped",
-          payment: {
-            method: "PayPal",
-            status: "paid",
-            transactionId: "txn_56789",
-          },
-          shippingInfo: {
-            method: "Express Shipping",
-            trackingNumber: "TRK65432109",
-            estimatedDelivery: "March 12, 2025",
-            address: "404 Birch St, Denver, CO 80202, USA",
-          },
-          notes: "",
-        },
-        {
-          id: "ORD-2023-0005",
-          date: "March 8, 2025",
-          timestamp: "2025-03-08T15:20:00Z",
-          customer: {
-            name: "Jennifer Wilson",
-            email: "jennifer.w@example.com",
-            phone: "+1 (555) 567-8901",
-          },
-          items: [
-            { id: 8, name: "Razer Blade 15", quantity: 1, price: 1699.99 },
-            { id: 19, name: "Gaming Mouse", quantity: 1, price: 69.99 },
-            { id: 20, name: "Gaming Keyboard", quantity: 1, price: 129.99 },
-          ],
-          subtotal: 1899.97,
-          tax: 152.0,
-          shipping: 0,
-          total: 2051.97,
-          status: "processing",
-          payment: {
-            method: "Credit Card",
-            status: "paid",
-            transactionId: "txn_67890",
-          },
-          shippingInfo: {
-            method: "Standard Shipping",
-            trackingNumber: "",
-            estimatedDelivery: "March 13, 2025",
-            address: "505 Walnut St, Phoenix, AZ 85001, USA",
-          },
-          notes: "",
-        },
-      ];
+    const fetchOrders = async () => {
+      setIsLoading(true);
+      try {
+        const response = await apiService.getAdminOrders();
+        setOrders(response.data || []);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching orders:", err);
+        setError("Failed to load orders. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-      setOrders(mockOrders);
-      setIsLoading(false);
-    }, 1000);
+    fetchOrders();
   }, []);
 
   const getStatusColor = (status) => {
@@ -348,7 +107,7 @@ const OrderManagement = () => {
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      setSelectedOrders(filteredOrders.map((order) => order.id));
+      setSelectedOrders(filteredOrders.map((order) => order._id));
     } else {
       setSelectedOrders([]);
     }
@@ -370,24 +129,63 @@ const OrderManagement = () => {
     }
   };
 
-  const updateOrderStatus = (id, newStatus) => {
-    setOrders(
-      orders.map((order) =>
-        order.id === id ? { ...order, status: newStatus } : order
-      )
-    );
+  const updateOrderStatus = async (id, newStatus) => {
+    try {
+      await apiService.updateOrderStatus(id, { status: newStatus });
+      setOrders(
+        orders.map((order) =>
+          order._id === id ? { ...order, status: newStatus } : order
+        )
+      );
+      toast.success(`Order status updated to ${newStatus}`);
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      toast.error("Failed to update order status");
+    }
   };
 
-  const bulkUpdateStatus = (newStatus) => {
-    setOrders(
-      orders.map((order) =>
-        selectedOrders.includes(order.id)
-          ? { ...order, status: newStatus }
-          : order
-      )
-    );
-    setSelectedOrders([]);
-    setBulkActionOpen(false);
+  const bulkUpdateStatus = async (newStatus) => {
+    try {
+      // Create an array of promises for each status update
+      const updatePromises = selectedOrders.map((orderId) =>
+        apiService.updateOrderStatus(orderId, { status: newStatus })
+      );
+
+      // Wait for all updates to complete
+      await Promise.all(updatePromises);
+
+      // Update local state
+      setOrders(
+        orders.map((order) =>
+          selectedOrders.includes(order._id)
+            ? { ...order, status: newStatus }
+            : order
+        )
+      );
+
+      setSelectedOrders([]);
+      setBulkActionOpen(false);
+      toast.success(`${selectedOrders.length} orders updated to ${newStatus}`);
+    } catch (error) {
+      console.error("Error with bulk update:", error);
+      toast.error("Failed to update some orders");
+    }
+  };
+
+  const exportOrders = () => {
+    // This would be implemented to generate and download a CSV/Excel file
+    toast.info("Export functionality coming soon");
+  };
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
   };
 
   // Apply all filters and sorting
@@ -396,9 +194,13 @@ const OrderManagement = () => {
       // Search filter
       if (
         searchTerm &&
-        !order.id.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        !order.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        !order.customer.email.toLowerCase().includes(searchTerm.toLowerCase())
+        !order._id.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        !(order.user?.name || "")
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) &&
+        !(order.user?.email || "")
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())
       ) {
         return false;
       }
@@ -410,7 +212,7 @@ const OrderManagement = () => {
 
       // Date filter
       if (dateFilter !== "all") {
-        const orderDate = new Date(order.timestamp);
+        const orderDate = new Date(order.createdAt);
         const currentDate = new Date();
 
         if (dateFilter === "today") {
@@ -438,15 +240,15 @@ const OrderManagement = () => {
       // Sort based on selected option
       switch (sortBy) {
         case "newest":
-          return new Date(b.timestamp) - new Date(a.timestamp);
+          return new Date(b.createdAt) - new Date(a.createdAt);
         case "oldest":
-          return new Date(a.timestamp) - new Date(b.timestamp);
+          return new Date(a.createdAt) - new Date(b.createdAt);
         case "amount-high":
-          return b.total - a.total;
+          return b.totalPrice - a.totalPrice;
         case "amount-low":
-          return a.total - b.total;
+          return a.totalPrice - b.totalPrice;
         case "name":
-          return a.customer.name.localeCompare(b.customer.name);
+          return (a.user?.name || "").localeCompare(b.user?.name || "");
         default:
           return 0;
       }
@@ -474,7 +276,7 @@ const OrderManagement = () => {
         <h1 className="text-3xl font-bold text-gray-900">Manage Orders</h1>
         <div className="mt-4 sm:mt-0">
           <button
-            onClick={() => {}}
+            onClick={exportOrders}
             className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
           >
             <Download className="h-4 w-4 mr-2" />
@@ -711,7 +513,7 @@ const OrderManagement = () => {
                     </button>
                     <div className="border-t border-gray-100"></div>
                     <button
-                      onClick={() => {}}
+                      onClick={exportOrders}
                       className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       role="menuitem"
                     >
@@ -802,10 +604,10 @@ const OrderManagement = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredOrders.map((order) => (
-                  <React.Fragment key={order.id}>
+                  <React.Fragment key={order._id}>
                     <tr
                       className={`${
-                        expandedOrderId === order.id
+                        expandedOrderId === order._id
                           ? "bg-gray-50"
                           : "hover:bg-gray-50"
                       }`}
@@ -814,8 +616,8 @@ const OrderManagement = () => {
                         <div className="flex items-center">
                           <input
                             type="checkbox"
-                            checked={selectedOrders.includes(order.id)}
-                            onChange={() => handleSelectOrder(order.id)}
+                            checked={selectedOrders.includes(order._id)}
+                            onChange={() => handleSelectOrder(order._id)}
                             className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
                           />
                         </div>
@@ -823,24 +625,24 @@ const OrderManagement = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         <button
                           className="hover:text-orange-600 focus:outline-none"
-                          onClick={() => toggleOrderExpand(order.id)}
+                          onClick={() => toggleOrderExpand(order._id)}
                         >
-                          {order.id}
+                          {order._id.substring(0, 10)}...
                         </button>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {order.customer.name}
+                          {order.user?.name || "Guest User"}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {order.customer.email}
+                          {order.user?.email || "No email provided"}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {order.date}
+                        {formatDate(order.createdAt)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        ${order.total.toFixed(2)}
+                        ${order.totalPrice?.toFixed(2) || "N/A"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
@@ -857,18 +659,18 @@ const OrderManagement = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPaymentStatusColor(
-                            order.payment.status
+                            order.isPaid ? "paid" : "pending"
                           )}`}
                         >
                           <span className="capitalize">
-                            {order.payment.status}
+                            {order.isPaid ? "Paid" : "Pending"}
                           </span>
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2">
                           <Link
-                            to={`/admin/orders/${order.id}`}
+                            to={`/admin/orders/${order._id}`}
                             className="text-orange-600 hover:text-orange-900"
                             title="View Details"
                           >
@@ -886,7 +688,7 @@ const OrderManagement = () => {
                               onClick={(e) => {
                                 e.stopPropagation();
                                 const dropdown = document.getElementById(
-                                  `status-dropdown-${order.id}`
+                                  `status-dropdown-${order._id}`
                                 );
                                 if (dropdown) {
                                   dropdown.classList.toggle("hidden");
@@ -898,7 +700,7 @@ const OrderManagement = () => {
                               <Edit className="h-5 w-5" />
                             </button>
                             <div
-                              id={`status-dropdown-${order.id}`}
+                              id={`status-dropdown-${order._id}`}
                               className="hidden absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10"
                             >
                               <div
@@ -908,7 +710,7 @@ const OrderManagement = () => {
                               >
                                 <button
                                   onClick={() =>
-                                    updateOrderStatus(order.id, "pending")
+                                    updateOrderStatus(order._id, "pending")
                                   }
                                   className={`block w-full text-left px-4 py-2 text-sm ${
                                     order.status === "pending"
@@ -921,7 +723,7 @@ const OrderManagement = () => {
                                 </button>
                                 <button
                                   onClick={() =>
-                                    updateOrderStatus(order.id, "processing")
+                                    updateOrderStatus(order._id, "processing")
                                   }
                                   className={`block w-full text-left px-4 py-2 text-sm ${
                                     order.status === "processing"
@@ -934,7 +736,7 @@ const OrderManagement = () => {
                                 </button>
                                 <button
                                   onClick={() =>
-                                    updateOrderStatus(order.id, "shipped")
+                                    updateOrderStatus(order._id, "shipped")
                                   }
                                   className={`block w-full text-left px-4 py-2 text-sm ${
                                     order.status === "shipped"
@@ -947,7 +749,7 @@ const OrderManagement = () => {
                                 </button>
                                 <button
                                   onClick={() =>
-                                    updateOrderStatus(order.id, "delivered")
+                                    updateOrderStatus(order._id, "delivered")
                                   }
                                   className={`block w-full text-left px-4 py-2 text-sm ${
                                     order.status === "delivered"
@@ -960,7 +762,7 @@ const OrderManagement = () => {
                                 </button>
                                 <button
                                   onClick={() =>
-                                    updateOrderStatus(order.id, "cancelled")
+                                    updateOrderStatus(order._id, "cancelled")
                                   }
                                   className={`block w-full text-left px-4 py-2 text-sm ${
                                     order.status === "cancelled"
@@ -977,7 +779,7 @@ const OrderManagement = () => {
                         </div>
                       </td>
                     </tr>
-                    {expandedOrderId === order.id && (
+                    {expandedOrderId === order._id && (
                       <tr>
                         <td colSpan="8" className="px-6 py-4 bg-gray-50">
                           <div className="text-sm">
@@ -991,7 +793,7 @@ const OrderManagement = () => {
                                     <div className="text-xs text-gray-500 uppercase font-medium mb-1">
                                       Items
                                     </div>
-                                    {order.items.map((item, index) => (
+                                    {order.orderItems.map((item, index) => (
                                       <div
                                         key={index}
                                         className="flex justify-between mb-1"
@@ -1020,11 +822,15 @@ const OrderManagement = () => {
                                       <span className="text-gray-600">
                                         Shipping:
                                       </span>
-                                      <span>${order.shipping.toFixed(2)}</span>
+                                      <span>
+                                        ${order.shippingCost.toFixed(2)}
+                                      </span>
                                     </div>
                                     <div className="flex justify-between font-medium border-t border-gray-200 pt-1 mt-1">
                                       <span>Total:</span>
-                                      <span>${order.total.toFixed(2)}</span>
+                                      <span>
+                                        ${order.totalPrice.toFixed(2)}
+                                      </span>
                                     </div>
                                   </div>
                                 </div>
@@ -1038,23 +844,32 @@ const OrderManagement = () => {
                                     Address
                                   </div>
                                   <p className="text-gray-700 mb-3">
-                                    {order.shipping.address}
+                                    {order.shippingAddress.name}
+                                    <br />
+                                    {order.shippingAddress.address}
+                                    <br />
+                                    {order.shippingAddress.city},{" "}
+                                    {order.shippingAddress.state}{" "}
+                                    {order.shippingAddress.postalCode}
+                                    <br />
+                                    {order.shippingAddress.country}
                                   </p>
 
                                   <div className="text-xs text-gray-500 uppercase font-medium mb-1">
                                     Method
                                   </div>
                                   <p className="text-gray-700 mb-3">
-                                    {order.shipping.method}
+                                    {order.shippingMethod ||
+                                      "Standard Shipping"}
                                   </p>
 
-                                  {order.shipping.trackingNumber && (
+                                  {order.trackingNumber && (
                                     <>
                                       <div className="text-xs text-gray-500 uppercase font-medium mb-1">
                                         Tracking Number
                                       </div>
                                       <p className="text-gray-700 mb-3">
-                                        {order.shipping.trackingNumber}
+                                        {order.trackingNumber}
                                       </p>
                                     </>
                                   )}
@@ -1063,7 +878,14 @@ const OrderManagement = () => {
                                     Estimated Delivery
                                   </div>
                                   <p className="text-gray-700">
-                                    {order.shipping.estimatedDelivery}
+                                    {order.estimatedDelivery
+                                      ? formatDate(order.estimatedDelivery)
+                                      : order.status === "pending" ||
+                                        order.status === "processing"
+                                      ? "Pending"
+                                      : order.status === "cancelled"
+                                      ? "Cancelled"
+                                      : "No estimate available"}
                                   </p>
                                 </div>
 
@@ -1076,7 +898,7 @@ const OrderManagement = () => {
                                     Email Customer
                                   </button>
                                   <Link
-                                    to={`/admin/orders/${order.id}`}
+                                    to={`/admin/orders/${order._id}`}
                                     className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
                                   >
                                     View Full Details

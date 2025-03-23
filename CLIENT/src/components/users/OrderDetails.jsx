@@ -15,7 +15,6 @@ import {
   RefreshCw,
   Package,
   ChevronRight,
-  MemoryStick 
 } from "lucide-react";
 
 const OrderDetails = () => {

@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
+import apiService from "../utils/apiService";
 import {
   Search,
   ChevronDown,
@@ -14,196 +16,46 @@ import {
 } from "lucide-react";
 
 const Orders = () => {
+  const { auth } = useContext(AuthContext);
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [timeFilter, setTimeFilter] = useState("all");
   const [expandedOrderId, setExpandedOrderId] = useState(null);
 
   useEffect(() => {
-    // Simulate API fetch
-    setTimeout(() => {
-      // In a real app, this would be an API call
-      const mockOrders = [
-        {
-          id: "ORD-2023-0012",
-          date: "March 15, 2025",
-          timestamp: "2025-03-15T10:30:00Z",
-          status: "delivered",
-          items: [
-            {
-              id: 101,
-              name: "MacBook Pro M3",
-              price: 1999.99,
-              quantity: 1,
-              image:
-                "https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&q=80",
-            },
-          ],
-          subtotal: 1999.99,
-          shipping: 0,
-          tax: 160.0,
-          total: 2159.99,
-          shipping_address: {
-            name: "John Doe",
-            street: "123 Main St",
-            city: "New York",
-            state: "NY",
-            zip: "10001",
-            country: "USA",
-          },
-          payment_method: "Credit Card (ending in 4242)",
-          tracking_number: "TRK98765432",
-          estimated_delivery: "March 18, 2025",
-          delivery_date: "March 17, 2025",
-          delivery_notes: "Left with doorman",
-        },
-        {
-          id: "ORD-2023-0010",
-          date: "March 8, 2025",
-          timestamp: "2025-03-08T15:45:00Z",
-          status: "shipped",
-          items: [
-            {
-              id: 102,
-              name: "Dell XPS 13",
-              price: 1499.99,
-              quantity: 1,
-              image:
-                "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&q=80",
-            },
-            {
-              id: 201,
-              name: "USB-C Hub",
-              price: 49.99,
-              quantity: 1,
-              image:
-                "https://images.unsplash.com/photo-1656427457484-6890ae34dca3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&q=80",
-            },
-          ],
-          subtotal: 1549.98,
-          shipping: 29.99,
-          tax: 124.0,
-          total: 1703.97,
-          shipping_address: {
-            name: "John Doe",
-            street: "123 Main St",
-            city: "New York",
-            state: "NY",
-            zip: "10001",
-            country: "USA",
-          },
-          payment_method: "PayPal",
-          tracking_number: "TRK12345678",
-          estimated_delivery: "March 20, 2025",
-        },
-        {
-          id: "ORD-2023-0008",
-          date: "February 28, 2025",
-          timestamp: "2025-02-28T09:15:00Z",
-          status: "processing",
-          items: [
-            {
-              id: 103,
-              name: "Lenovo ThinkPad X1",
-              price: 1799.99,
-              quantity: 1,
-              image:
-                "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&q=80",
-            },
-          ],
-          subtotal: 1799.99,
-          shipping: 0,
-          tax: 144.0,
-          total: 1943.99,
-          shipping_address: {
-            name: "John Doe",
-            street: "123 Main St",
-            city: "New York",
-            state: "NY",
-            zip: "10001",
-            country: "USA",
-          },
-          payment_method: "Credit Card (ending in 4242)",
-          estimated_delivery: "March 25, 2025",
-        },
-        {
-          id: "ORD-2023-0005",
-          date: "February 15, 2025",
-          timestamp: "2025-02-15T11:30:00Z",
-          status: "cancelled",
-          items: [
-            {
-              id: 104,
-              name: "HP Spectre x360",
-              price: 1399.99,
-              quantity: 1,
-              image:
-                "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&q=80",
-            },
-          ],
-          subtotal: 1399.99,
-          shipping: 0,
-          tax: 112.0,
-          total: 1511.99,
-          shipping_address: {
-            name: "John Doe",
-            street: "123 Main St",
-            city: "New York",
-            state: "NY",
-            zip: "10001",
-            country: "USA",
-          },
-          payment_method: "Credit Card (ending in 4242)",
-          cancellation_reason: "Customer requested cancellation",
-        },
-        {
-          id: "ORD-2023-0001",
-          date: "January 5, 2025",
-          timestamp: "2025-01-05T14:20:00Z",
-          status: "delivered",
-          items: [
-            {
-              id: 105,
-              name: "ASUS ROG Zephyrus",
-              price: 1799.99,
-              quantity: 1,
-              image:
-                "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&q=80",
-            },
-          ],
-          subtotal: 1799.99,
-          shipping: 0,
-          tax: 144.0,
-          total: 1943.99,
-          shipping_address: {
-            name: "John Doe",
-            street: "123 Main St",
-            city: "New York",
-            state: "NY",
-            zip: "10001",
-            country: "USA",
-          },
-          payment_method: "Credit Card (ending in 4242)",
-          tracking_number: "TRK87654321",
-          estimated_delivery: "January 10, 2025",
-          delivery_date: "January 9, 2025",
-        },
-      ];
+    const fetchOrders = async () => {
+      if (!auth.isAuthenticated) {
+        setIsLoading(false);
+        return;
+      }
 
-      setOrders(mockOrders);
-      setIsLoading(false);
-    }, 1000);
-  }, []);
+      setIsLoading(true);
+      try {
+        const response = await apiService.getUserOrders();
+        setOrders(response.data || response);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching orders:", err);
+        setError("Failed to load your orders. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, [auth.isAuthenticated]);
 
   // Filter orders based on search term, status, and time
   const filteredOrders = orders.filter((order) => {
     // Search filter
     if (
       searchTerm &&
-      !order.id.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      !order.items.some((item) =>
+      !order.id?.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      !order._id?.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      !order.orderItems?.some((item) =>
         item.name.toLowerCase().includes(searchTerm.toLowerCase())
       )
     ) {
@@ -217,7 +69,7 @@ const Orders = () => {
 
     // Time filter
     if (timeFilter !== "all") {
-      const orderDate = new Date(order.timestamp);
+      const orderDate = new Date(order.createdAt || order.timestamp);
       const currentDate = new Date();
 
       if (timeFilter === "last30days") {
@@ -271,6 +123,8 @@ const Orders = () => {
         return "Processing";
       case "cancelled":
         return "Cancelled";
+      case "pending":
+        return "Pending";
       default:
         return "Unknown";
     }
@@ -286,9 +140,22 @@ const Orders = () => {
         return "bg-yellow-100 text-yellow-800";
       case "cancelled":
         return "bg-red-100 text-red-800";
+      case "pending":
+        return "bg-gray-100 text-gray-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
+  };
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
   };
 
   if (isLoading) {
@@ -304,6 +171,33 @@ const Orders = () => {
       </div>
     );
   }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">My Orders</h1>
+        <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <AlertCircle className="h-5 w-5 text-red-400" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          </div>
+        </div>
+        <button
+          onClick={() => window.location.reload()}
+          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  // Helper to get order ID (handles both id and _id variations)
+  const getOrderId = (order) => order._id || order.id;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -340,6 +234,7 @@ const Orders = () => {
                   className="appearance-none w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
                 >
                   <option value="all">All Status</option>
+                  <option value="pending">Pending</option>
                   <option value="processing">Processing</option>
                   <option value="shipped">Shipped</option>
                   <option value="delivered">Delivered</option>
@@ -381,7 +276,7 @@ const Orders = () => {
         <div className="space-y-6">
           {filteredOrders.map((order) => (
             <div
-              key={order.id}
+              key={getOrderId(order)}
               className="bg-white rounded-lg shadow overflow-hidden"
             >
               {/* Order Header */}
@@ -390,7 +285,7 @@ const Orders = () => {
                   <div className="flex flex-col mb-4 md:mb-0">
                     <div className="flex items-center">
                       <span className="text-lg font-medium text-gray-900 mr-2">
-                        Order #{order.id}
+                        Order #{getOrderId(order)}
                       </span>
                       <span
                         className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(
@@ -402,30 +297,33 @@ const Orders = () => {
                     </div>
                     <div className="flex items-center mt-1 text-sm text-gray-500">
                       <Calendar className="h-4 w-4 mr-1" />
-                      <span>Placed on {order.date}</span>
+                      <span>
+                        Placed on {formatDate(order.createdAt || order.date)}
+                      </span>
                     </div>
                   </div>
 
                   <div className="flex space-x-3">
                     <Link
-                      to={`/order-details/${order.id}`}
+                      to={`/order-details/${getOrderId(order)}`}
                       className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                     >
                       <FileText className="h-4 w-4 mr-1" />
                       Details
                     </Link>
                     <button
-                      onClick={() => toggleOrderExpand(order.id)}
+                      onClick={() => toggleOrderExpand(getOrderId(order))}
                       className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
                     >
-                      {expandedOrderId === order.id ? "Hide" : "Show"} Items
+                      {expandedOrderId === getOrderId(order) ? "Hide" : "Show"}{" "}
+                      Items
                     </button>
                   </div>
                 </div>
               </div>
 
               {/* Order Content - visible when expanded */}
-              {expandedOrderId === order.id && (
+              {expandedOrderId === getOrderId(order) && (
                 <>
                   <div className="px-6 py-4 border-b border-gray-200">
                     <div className="flow-root">
@@ -433,11 +331,14 @@ const Orders = () => {
                         role="list"
                         className="-my-6 divide-y divide-gray-200"
                       >
-                        {order.items.map((item) => (
-                          <li key={item.id} className="py-4 flex">
+                        {order.orderItems.map((item, idx) => (
+                          <li key={idx} className="py-4 flex">
                             <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
                               <img
-                                src={item.image}
+                                src={
+                                  item.image ||
+                                  "https://via.placeholder.com/300x200?text=No+Image"
+                                }
                                 alt={item.name}
                                 className="h-full w-full object-cover object-center"
                               />
@@ -446,7 +347,7 @@ const Orders = () => {
                               <div>
                                 <div className="flex justify-between text-base font-medium text-gray-900">
                                   <h3>
-                                    <Link to={`/laptops/${item.id}`}>
+                                    <Link to={`/laptops/${item.laptop}`}>
                                       {item.name}
                                     </Link>
                                   </h3>
@@ -484,22 +385,32 @@ const Orders = () => {
                           Shipping Information
                         </h4>
                         <p className="text-gray-600">
-                          {order.shipping_address.name}
+                          {order.shippingAddress.name}
                           <br />
-                          {order.shipping_address.street}
+                          {order.shippingAddress.address}
                           <br />
-                          {order.shipping_address.city},{" "}
-                          {order.shipping_address.state}{" "}
-                          {order.shipping_address.zip}
+                          {order.shippingAddress.city},{" "}
+                          {order.shippingAddress.state}{" "}
+                          {order.shippingAddress.postalCode}
                           <br />
-                          {order.shipping_address.country}
+                          {order.shippingAddress.country}
                         </p>
                       </div>
                       <div>
                         <h4 className="font-medium text-gray-900 mb-1">
                           Payment Method
                         </h4>
-                        <p className="text-gray-600">{order.payment_method}</p>
+                        <p className="text-gray-600">
+                          {order.paymentMethod === "credit_card"
+                            ? "Credit Card"
+                            : order.paymentMethod === "paypal"
+                            ? "PayPal"
+                            : order.paymentMethod === "bank_transfer"
+                            ? "Bank Transfer"
+                            : order.paymentMethod === "cash_on_delivery"
+                            ? "Cash on Delivery"
+                            : order.paymentMethod}
+                        </p>
 
                         <h4 className="font-medium text-gray-900 mt-4 mb-1">
                           Order Status
@@ -525,9 +436,9 @@ const Orders = () => {
                           <div className="flex justify-between">
                             <span className="text-gray-600">Shipping:</span>
                             <span className="text-gray-900">
-                              {order.shipping === 0
+                              {order.shippingCost === 0
                                 ? "Free"
-                                : `$${order.shipping.toFixed(2)}`}
+                                : `$${order.shippingCost.toFixed(2)}`}
                             </span>
                           </div>
                           <div className="flex justify-between">
@@ -539,7 +450,7 @@ const Orders = () => {
                           <div className="flex justify-between font-medium pt-1 border-t border-gray-200">
                             <span className="text-gray-900">Total:</span>
                             <span className="text-gray-900">
-                              ${order.total.toFixed(2)}
+                              ${order.totalPrice.toFixed(2)}
                             </span>
                           </div>
                         </div>
@@ -557,8 +468,11 @@ const Orders = () => {
                       <Truck className="h-5 w-5 text-blue-500 mr-2" />
                       <span className="text-sm text-gray-600">
                         <span className="font-medium">Estimated delivery:</span>{" "}
-                        {order.estimated_delivery} • Tracking #:{" "}
-                        {order.tracking_number}
+                        {order.estimatedDelivery
+                          ? formatDate(order.estimatedDelivery)
+                          : "Pending"}
+                        {order.trackingNumber &&
+                          ` • Tracking #: ${order.trackingNumber}`}
                       </span>
                     </>
                   )}
@@ -567,8 +481,10 @@ const Orders = () => {
                       <Check className="h-5 w-5 text-green-500 mr-2" />
                       <span className="text-sm text-gray-600">
                         <span className="font-medium">Delivered on:</span>{" "}
-                        {order.delivery_date}
-                        {order.delivery_notes && ` • ${order.delivery_notes}`}
+                        {order.deliveredAt
+                          ? formatDate(order.deliveredAt)
+                          : "N/A"}
+                        {order.notes && ` • ${order.notes}`}
                       </span>
                     </>
                   )}
@@ -577,14 +493,26 @@ const Orders = () => {
                       <X className="h-5 w-5 text-red-500 mr-2" />
                       <span className="text-sm text-gray-600">
                         <span className="font-medium">Cancelled:</span>{" "}
-                        {order.cancellation_reason}
+                        {order.notes || "Order cancelled"}
+                      </span>
+                    </>
+                  )}
+                  {(order.status === "pending" ||
+                    order.status === "processing") && (
+                    <>
+                      <RefreshCw className="h-5 w-5 text-yellow-500 mr-2" />
+                      <span className="text-sm text-gray-600">
+                        <span className="font-medium">
+                          {getStatusText(order.status)}:
+                        </span>{" "}
+                        Your order is being processed
                       </span>
                     </>
                   )}
                 </div>
                 <div className="text-sm">
                   <span className="font-medium text-gray-900">
-                    ${order.total.toFixed(2)}
+                    ${order.totalPrice.toFixed(2)}
                   </span>
                 </div>
               </div>

@@ -11,11 +11,15 @@ import {
   SlidersHorizontal,
   X,
   Heart,
+  AlertCircle,
 } from "lucide-react";
+import apiService from "../utils/apiService";
+import { toast } from "sonner";
 
 const Laptops = () => {
   const [laptops, setLaptops] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
     brand: [],
     price: "",
@@ -25,112 +29,26 @@ const Laptops = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState("featured");
   const [searchTerm, setSearchTerm] = useState("");
+  const [wishlist, setWishlist] = useState([]);
 
   useEffect(() => {
-    // Simulating API fetch
-    setTimeout(() => {
-      // Mock data - in a real app, this would come from an API
-      const mockLaptops = [
-        {
-          id: 1,
-          name: "MacBook Pro M3",
-          brand: "Apple",
-          type: "Ultrabook",
-          processor: "Apple M3",
-          ram: "16GB",
-          storage: "512GB SSD",
-          display: "14-inch Retina",
-          battery: "20 hours",
-          price: 1999.99,
-          rating: 4.8,
-          reviews: 124,
-          image:
-            "https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80",
-        },
-        {
-          id: 2,
-          name: "Dell XPS 13",
-          brand: "Dell",
-          type: "Ultrabook",
-          processor: "Intel i7",
-          ram: "16GB",
-          storage: "1TB SSD",
-          display: "13.4-inch UHD+",
-          battery: "12 hours",
-          price: 1499.99,
-          rating: 4.6,
-          reviews: 89,
-          image:
-            "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1032&q=80",
-        },
-        {
-          id: 3,
-          name: "Lenovo Legion 5",
-          brand: "Lenovo",
-          type: "Gaming",
-          processor: "AMD Ryzen 7",
-          ram: "32GB",
-          storage: "1TB SSD",
-          display: "15.6-inch FHD 144Hz",
-          battery: "8 hours",
-          price: 1299.99,
-          rating: 4.4,
-          reviews: 76,
-          image:
-            "https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1169&q=80",
-        },
-        {
-          id: 4,
-          name: "HP Spectre x360",
-          brand: "HP",
-          type: "2-in-1",
-          processor: "Intel i7",
-          ram: "16GB",
-          storage: "512GB SSD",
-          display: "13.5-inch OLED",
-          battery: "16 hours",
-          price: 1399.99,
-          rating: 4.5,
-          reviews: 62,
-          image:
-            "https://images.unsplash.com/photo-1587614382346-4ec70e388b28?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80",
-        },
-        {
-          id: 5,
-          name: "ASUS ROG Zephyrus G14",
-          brand: "ASUS",
-          type: "Gaming",
-          processor: "AMD Ryzen 9",
-          ram: "32GB",
-          storage: "1TB SSD",
-          display: "14-inch QHD 120Hz",
-          battery: "10 hours",
-          price: 1799.99,
-          rating: 4.7,
-          reviews: 105,
-          image:
-            "https://images.unsplash.com/photo-1593642634315-48f5414c3ad9?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1169&q=80",
-        },
-        {
-          id: 6,
-          name: "Acer Swift 5",
-          brand: "Acer",
-          type: "Ultrabook",
-          processor: "Intel i5",
-          ram: "8GB",
-          storage: "512GB SSD",
-          display: "14-inch FHD",
-          battery: "15 hours",
-          price: 899.99,
-          rating: 4.2,
-          reviews: 48,
-          image:
-            "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80",
-        },
-      ];
-      setLaptops(mockLaptops);
-      setIsLoading(false);
-    }, 1000);
+    const fetchLaptops = async () => {
+      setIsLoading(true);
+      try {
+        // Get laptops from API
+        const response = await apiService.getLaptops();
+        setLaptops(response.data || []);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching laptops:", err);
+        setError("Failed to load laptops. Please try again.");
+        toast.error("Error loading laptops");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLaptops();
   }, []);
 
   const handleFilterChange = (category, value) => {
@@ -157,6 +75,16 @@ const Laptops = () => {
     setSearchTerm("");
   };
 
+  const toggleWishlist = (laptopId) => {
+    if (wishlist.includes(laptopId)) {
+      setWishlist(wishlist.filter((id) => id !== laptopId));
+      toast.success("Removed from wishlist");
+    } else {
+      setWishlist([...wishlist, laptopId]);
+      toast.success("Added to wishlist");
+    }
+  };
+
   const filteredLaptops = laptops
     .filter((laptop) => {
       // Search filter
@@ -172,13 +100,17 @@ const Laptops = () => {
         return false;
       }
 
-      // Type filter
-      if (filters.type.length > 0 && !filters.type.includes(laptop.type)) {
-        return false;
+      // Type filter - if we track types in the database
+      if (filters.type.length > 0) {
+        // Check if laptop has a type property, or infer type from other properties
+        const laptopType = laptop.type || inferTypeFromLaptop(laptop);
+        if (!filters.type.includes(laptopType)) {
+          return false;
+        }
       }
 
       // Processor filter
-      if (filters.processor.length > 0) {
+      if (filters.processor.length > 0 && laptop.processor) {
         const processorType = laptop.processor.split(" ")[0];
         if (!filters.processor.some((p) => laptop.processor.includes(p))) {
           return false;
@@ -207,16 +139,52 @@ const Laptops = () => {
       // Sort logic
       if (sortBy === "price-low") return a.price - b.price;
       if (sortBy === "price-high") return b.price - a.price;
-      if (sortBy === "rating") return b.rating - a.rating;
+      if (sortBy === "rating") return (b.rating || 0) - (a.rating || 0);
       // Default is "featured" or any other value (no specific sort)
       return 0;
     });
 
+  // Infer laptop type from its properties if not explicitly set
+  const inferTypeFromLaptop = (laptop) => {
+    if (!laptop) return "Unknown";
+
+    // Check for keywords in the name or description
+    const nameAndDesc = (
+      laptop.name +
+      " " +
+      (laptop.description || "")
+    ).toLowerCase();
+
+    if (nameAndDesc.includes("gaming")) return "Gaming";
+    if (nameAndDesc.includes("2-in-1") || nameAndDesc.includes("convertible"))
+      return "2-in-1";
+    if (nameAndDesc.includes("ultrabook") || laptop.weight < 1.5)
+      return "Ultrabook";
+    if (nameAndDesc.includes("workstation")) return "Workstation";
+
+    // Default
+    return "Standard";
+  };
+
   // Get unique brands, types, etc. for filter options
-  const brands = [...new Set(laptops.map((laptop) => laptop.brand))];
-  const types = [...new Set(laptops.map((laptop) => laptop.type))];
+  const brands = [
+    ...new Set(laptops.map((laptop) => laptop.brand).filter(Boolean)),
+  ];
+
+  // For types, collect explicit types or infer them
+  const allTypes = laptops.map(
+    (laptop) => laptop.type || inferTypeFromLaptop(laptop)
+  );
+  const types = [...new Set(allTypes.filter(Boolean))];
+
+  // For processors, extract the manufacturer
   const processors = [
-    ...new Set(laptops.map((laptop) => laptop.processor.split(" ")[0])),
+    ...new Set(
+      laptops
+        .filter((laptop) => laptop.processor)
+        .map((laptop) => laptop.processor.split(" ")[0])
+        .filter(Boolean)
+    ),
   ];
 
   if (isLoading) {
@@ -229,6 +197,26 @@ const Laptops = () => {
               <div key={index} className="h-80 bg-gray-200 rounded"></div>
             ))}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="bg-white p-10 rounded-lg shadow text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            Error Loading Laptops
+          </h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );
@@ -310,31 +298,33 @@ const Laptops = () => {
               {/* Filter sections */}
               <div className="space-y-6">
                 {/* Brand Filter */}
-                <div>
-                  <h3 className="text-sm font-medium text-gray-900 mb-3">
-                    Brand
-                  </h3>
-                  <div className="space-y-2">
-                    {brands.map((brand) => (
-                      <div key={brand} className="flex items-center">
-                        <input
-                          id={`brand-${brand}`}
-                          name="brand"
-                          type="checkbox"
-                          checked={filters.brand.includes(brand)}
-                          onChange={() => handleFilterChange("brand", brand)}
-                          className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                        />
-                        <label
-                          htmlFor={`brand-${brand}`}
-                          className="ml-3 text-sm text-gray-600"
-                        >
-                          {brand}
-                        </label>
-                      </div>
-                    ))}
+                {brands.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-900 mb-3">
+                      Brand
+                    </h3>
+                    <div className="space-y-2">
+                      {brands.map((brand) => (
+                        <div key={brand} className="flex items-center">
+                          <input
+                            id={`brand-${brand}`}
+                            name="brand"
+                            type="checkbox"
+                            checked={filters.brand.includes(brand)}
+                            onChange={() => handleFilterChange("brand", brand)}
+                            className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                          />
+                          <label
+                            htmlFor={`brand-${brand}`}
+                            className="ml-3 text-sm text-gray-600"
+                          >
+                            {brand}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Price Filter */}
                 <div>
@@ -416,60 +406,64 @@ const Laptops = () => {
                 </div>
 
                 {/* Type Filter */}
-                <div>
-                  <h3 className="text-sm font-medium text-gray-900 mb-3">
-                    Type
-                  </h3>
-                  <div className="space-y-2">
-                    {types.map((type) => (
-                      <div key={type} className="flex items-center">
-                        <input
-                          id={`type-${type}`}
-                          name="type"
-                          type="checkbox"
-                          checked={filters.type.includes(type)}
-                          onChange={() => handleFilterChange("type", type)}
-                          className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                        />
-                        <label
-                          htmlFor={`type-${type}`}
-                          className="ml-3 text-sm text-gray-600"
-                        >
-                          {type}
-                        </label>
-                      </div>
-                    ))}
+                {types.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-900 mb-3">
+                      Type
+                    </h3>
+                    <div className="space-y-2">
+                      {types.map((type) => (
+                        <div key={type} className="flex items-center">
+                          <input
+                            id={`type-${type}`}
+                            name="type"
+                            type="checkbox"
+                            checked={filters.type.includes(type)}
+                            onChange={() => handleFilterChange("type", type)}
+                            className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                          />
+                          <label
+                            htmlFor={`type-${type}`}
+                            className="ml-3 text-sm text-gray-600"
+                          >
+                            {type}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Processor Filter */}
-                <div>
-                  <h3 className="text-sm font-medium text-gray-900 mb-3">
-                    Processor
-                  </h3>
-                  <div className="space-y-2">
-                    {processors.map((processor) => (
-                      <div key={processor} className="flex items-center">
-                        <input
-                          id={`processor-${processor}`}
-                          name="processor"
-                          type="checkbox"
-                          checked={filters.processor.includes(processor)}
-                          onChange={() =>
-                            handleFilterChange("processor", processor)
-                          }
-                          className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                        />
-                        <label
-                          htmlFor={`processor-${processor}`}
-                          className="ml-3 text-sm text-gray-600"
-                        >
-                          {processor}
-                        </label>
-                      </div>
-                    ))}
+                {processors.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-900 mb-3">
+                      Processor
+                    </h3>
+                    <div className="space-y-2">
+                      {processors.map((processor) => (
+                        <div key={processor} className="flex items-center">
+                          <input
+                            id={`processor-${processor}`}
+                            name="processor"
+                            type="checkbox"
+                            checked={filters.processor.includes(processor)}
+                            onChange={() =>
+                              handleFilterChange("processor", processor)
+                            }
+                            className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                          />
+                          <label
+                            htmlFor={`processor-${processor}`}
+                            className="ml-3 text-sm text-gray-600"
+                          >
+                            {processor}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
@@ -519,17 +513,30 @@ const Laptops = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredLaptops.map((laptop) => (
                   <div
-                    key={laptop.id}
+                    key={laptop._id}
                     className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
                   >
                     <div className="relative h-48 overflow-hidden">
                       <img
-                        src={laptop.image}
+                        src={
+                          laptop.images && laptop.images.length > 0
+                            ? laptop.images[0]
+                            : "https://via.placeholder.com/300x200?text=No+Image"
+                        }
                         alt={laptop.name}
                         className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                       />
-                      <button className="absolute top-3 right-3 p-1.5 bg-white rounded-full shadow hover:bg-gray-100">
-                        <Heart className="h-5 w-5 text-gray-400 hover:text-red-500" />
+                      <button
+                        className="absolute top-3 right-3 p-1.5 bg-white rounded-full shadow hover:bg-gray-100"
+                        onClick={() => toggleWishlist(laptop._id)}
+                      >
+                        <Heart
+                          className={`h-5 w-5 ${
+                            wishlist.includes(laptop._id)
+                              ? "text-red-500"
+                              : "text-gray-400 hover:text-red-500"
+                          }`}
+                        />
                       </button>
                     </div>
                     <div className="p-5">
@@ -537,58 +544,83 @@ const Laptops = () => {
                         {laptop.name}
                       </h3>
                       <p className="text-sm text-gray-500 mb-3">
-                        {laptop.brand} • {laptop.type}
+                        {laptop.brand} •{" "}
+                        {laptop.type || inferTypeFromLaptop(laptop)}
                       </p>
                       <div className="flex flex-wrap gap-2 mb-4">
-                        <div className="bg-gray-100 px-2 py-1 rounded text-xs flex items-center">
-                          <Cpu className="h-3 w-3 mr-1" />
-                          {laptop.processor}
-                        </div>
-                        <div className="bg-gray-100 px-2 py-1 rounded text-xs flex items-center">
-                          <HardDrive className="h-3 w-3 mr-1" />
-                          {laptop.ram}/{laptop.storage}
-                        </div>
-                        <div className="bg-gray-100 px-2 py-1 rounded text-xs flex items-center">
-                          <Monitor className="h-3 w-3 mr-1" />
-                          {laptop.display}
-                        </div>
-                        <div className="bg-gray-100 px-2 py-1 rounded text-xs flex items-center">
-                          <Battery className="h-3 w-3 mr-1" />
-                          {laptop.battery}
-                        </div>
+                        {laptop.processor && (
+                          <div className="bg-gray-100 px-2 py-1 rounded text-xs flex items-center">
+                            <Cpu className="h-3 w-3 mr-1" />
+                            {laptop.processor}
+                          </div>
+                        )}
+                        {(laptop.ram || laptop.storage) && (
+                          <div className="bg-gray-100 px-2 py-1 rounded text-xs flex items-center">
+                            <HardDrive className="h-3 w-3 mr-1" />
+                            {laptop.ram}
+                            {laptop.ram && laptop.storage ? "/" : ""}
+                            {laptop.storage}
+                          </div>
+                        )}
+                        {laptop.display && (
+                          <div className="bg-gray-100 px-2 py-1 rounded text-xs flex items-center">
+                            <Monitor className="h-3 w-3 mr-1" />
+                            {laptop.display}
+                          </div>
+                        )}
+                        {laptop.battery && (
+                          <div className="bg-gray-100 px-2 py-1 rounded text-xs flex items-center">
+                            <Battery className="h-3 w-3 mr-1" />
+                            {laptop.battery}
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="text-xl font-bold text-gray-900">
-                            ${laptop.price.toFixed(2)}
+                            ${laptop.price?.toFixed(2)}
                           </div>
-                          <div className="flex items-center mt-1">
-                            <div className="flex">
-                              {[...Array(5)].map((_, i) => (
-                                <svg
-                                  key={i}
-                                  className={`h-4 w-4 ${
-                                    i < Math.floor(laptop.rating)
-                                      ? "text-yellow-400"
-                                      : "text-gray-300"
-                                  }`}
-                                  fill="currentColor"
-                                  viewBox="0 0 20 20"
-                                >
-                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                </svg>
-                              ))}
+                          {laptop.rating && (
+                            <div className="flex items-center mt-1">
+                              <div className="flex">
+                                {[...Array(5)].map((_, i) => (
+                                  <svg
+                                    key={i}
+                                    className={`h-4 w-4 ${
+                                      i < Math.floor(laptop.rating)
+                                        ? "text-yellow-400"
+                                        : "text-gray-300"
+                                    }`}
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                  >
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                  </svg>
+                                ))}
+                              </div>
+                              <span className="text-xs text-gray-500 ml-1">
+                                ({laptop.numReviews || 0})
+                              </span>
                             </div>
-                            <span className="text-xs text-gray-500 ml-1">
-                              ({laptop.reviews})
-                            </span>
-                          </div>
+                          )}
                         </div>
                         <Link
-                          to={`/order/${laptop.id}`}
-                          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                          to={`/order/${laptop._id}`}
+                          className={`inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+                            laptop.isAvailable && laptop.stock > 0
+                              ? "bg-green-600 hover:bg-green-700"
+                              : "bg-gray-400 cursor-not-allowed"
+                          } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500`}
+                          onClick={(e) => {
+                            if (!laptop.isAvailable || laptop.stock <= 0) {
+                              e.preventDefault();
+                              toast.error("This laptop is out of stock");
+                            }
+                          }}
                         >
-                          Order Now
+                          {laptop.isAvailable && laptop.stock > 0
+                            ? "Order Now"
+                            : "Out of Stock"}
                         </Link>
                       </div>
                     </div>

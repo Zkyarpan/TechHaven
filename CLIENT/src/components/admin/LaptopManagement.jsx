@@ -13,11 +13,22 @@ import {
   AlertTriangle,
   Cpu,
   HardDrive,
+  ChevronLeft,
+  ChevronRight,
+  AlertCircle,
+  Check,
 } from "lucide-react";
+import apiService from "../utils/apiService";
+import { toast } from "sonner";
+
+// Constants
+const BACKEND_URL = "http://localhost:5000"; // Update if your backend is on a different URL
+const PLACEHOLDER_IMAGE = "./placeholder.jpg";
 
 const LaptopManagement = () => {
   const [laptops, setLaptops] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedBrands, setSelectedBrands] = useState([]);
   const [selectedTypes, setSelectedTypes] = useState([]);
@@ -27,138 +38,140 @@ const LaptopManagement = () => {
   const [selectedItems, setSelectedItems] = useState([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+
+  // Function to safely get the full image URL
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return PLACEHOLDER_IMAGE;
+
+    // Check if it's already an absolute URL
+    if (imagePath.startsWith("http")) {
+      return imagePath;
+    }
+
+    // If it's a relative path, prepend the backend URL
+    return `${BACKEND_URL}${imagePath}`;
+  };
+
+  // Fetch laptops from API
   useEffect(() => {
-    // Simulate API fetch
-    setTimeout(() => {
-      // Mock data - in a real app, this would come from an API
-      const mockLaptops = [
-        {
-          id: 1,
-          name: "MacBook Pro M3",
-          brand: "Apple",
-          type: "Ultrabook",
-          processor: "Apple M3",
-          ram: "16GB",
-          storage: "512GB SSD",
-          price: 1999.99,
-          stock: 15,
-          createdAt: "2025-01-15T10:30:00Z",
-          updatedAt: "2025-03-01T14:22:00Z",
-          image:
-            "https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&q=80",
-        },
-        {
-          id: 2,
-          name: "Dell XPS 13",
-          brand: "Dell",
-          type: "Ultrabook",
-          processor: "Intel i7",
-          ram: "16GB",
-          storage: "1TB SSD",
-          price: 1499.99,
-          stock: 8,
-          createdAt: "2025-01-20T09:15:00Z",
-          updatedAt: "2025-02-28T11:45:00Z",
-          image:
-            "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&q=80",
-        },
-        {
-          id: 3,
-          name: "Lenovo Legion 5",
-          brand: "Lenovo",
-          type: "Gaming",
-          processor: "AMD Ryzen 7",
-          ram: "32GB",
-          storage: "1TB SSD",
-          price: 1299.99,
-          stock: 6,
-          createdAt: "2025-02-05T14:20:00Z",
-          updatedAt: "2025-03-10T16:30:00Z",
-          image:
-            "https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&q=80",
-        },
-        {
-          id: 4,
-          name: "HP Spectre x360",
-          brand: "HP",
-          type: "2-in-1",
-          processor: "Intel i7",
-          ram: "16GB",
-          storage: "512GB SSD",
-          price: 1399.99,
-          stock: 10,
-          createdAt: "2025-02-10T11:10:00Z",
-          updatedAt: "2025-03-05T13:25:00Z",
-          image:
-            "https://images.unsplash.com/photo-1587614382346-4ec70e388b28?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&q=80",
-        },
-        {
-          id: 5,
-          name: "ASUS ROG Zephyrus G14",
-          brand: "ASUS",
-          type: "Gaming",
-          processor: "AMD Ryzen 9",
-          ram: "32GB",
-          storage: "1TB SSD",
-          price: 1799.99,
-          stock: 4,
-          createdAt: "2025-02-15T16:40:00Z",
-          updatedAt: "2025-03-12T09:50:00Z",
-          image:
-            "https://images.unsplash.com/photo-1593642634315-48f5414c3ad9?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&q=80",
-        },
-        {
-          id: 6,
-          name: "Apple MacBook Air M2",
-          brand: "Apple",
-          type: "Ultrabook",
-          processor: "Apple M2",
-          ram: "8GB",
-          storage: "256GB SSD",
-          price: 1199.99,
-          stock: 2,
-          createdAt: "2025-01-25T13:45:00Z",
-          updatedAt: "2025-03-02T10:15:00Z",
-          image:
-            "https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&q=80",
-        },
-        {
-          id: 7,
-          name: "Microsoft Surface Laptop 5",
-          brand: "Microsoft",
-          type: "Ultrabook",
-          processor: "Intel i5",
-          ram: "16GB",
-          storage: "512GB SSD",
-          price: 1299.99,
-          stock: 7,
-          createdAt: "2025-02-18T10:20:00Z",
-          updatedAt: "2025-03-08T16:10:00Z",
-          image:
-            "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&q=80",
-        },
-        {
-          id: 8,
-          name: "Razer Blade 15",
-          brand: "Razer",
-          type: "Gaming",
-          processor: "Intel i7",
-          ram: "16GB",
-          storage: "1TB SSD",
-          price: 1699.99,
-          stock: 3,
-          createdAt: "2025-02-22T15:30:00Z",
-          updatedAt: "2025-03-15T11:20:00Z",
-          image:
-            "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&q=80",
-        },
-      ];
+    const fetchLaptops = async () => {
+      setIsLoading(true);
+      setError(null);
 
-      setLaptops(mockLaptops);
-      setIsLoading(false);
-    }, 1000);
-  }, []);
+      try {
+        // Prepare query parameters
+        const params = {
+          page: currentPage,
+          limit,
+        };
+
+        // Only add filters that are actually set
+        if (searchTerm) params.search = searchTerm;
+        if (selectedBrands.length === 1) params.brand = selectedBrands[0];
+        if (selectedTypes.length === 1) params.type = selectedTypes[0];
+
+        // Sort parameter based on sortBy
+        switch (sortBy) {
+          case "newest":
+            params.sort = "-createdAt";
+            break;
+          case "oldest":
+            params.sort = "createdAt";
+            break;
+          case "name":
+            params.sort = "name";
+            break;
+          case "price-low":
+            params.sort = "price";
+            break;
+          case "price-high":
+            params.sort = "-price";
+            break;
+          case "stock-low":
+            params.sort = "stock";
+            break;
+          case "stock-high":
+            params.sort = "-stock";
+            break;
+          default:
+            params.sort = "-createdAt";
+        }
+
+        console.log("Fetching laptops with params:", params);
+
+        const response = await apiService.getLaptops(params);
+        console.log("API Response:", response);
+
+        // Process the API response
+        if (response && Array.isArray(response.data)) {
+          let filteredData = response.data;
+
+          // Client-side filtering for price range (since API might not support it)
+          if (priceRange.min) {
+            filteredData = filteredData.filter(
+              (laptop) => laptop.price >= parseFloat(priceRange.min)
+            );
+          }
+          if (priceRange.max) {
+            filteredData = filteredData.filter(
+              (laptop) => laptop.price <= parseFloat(priceRange.max)
+            );
+          }
+
+          // Client-side filtering for multiple brands/types (if API doesn't support it)
+          if (selectedBrands.length > 1) {
+            filteredData = filteredData.filter((laptop) =>
+              selectedBrands.includes(laptop.brand)
+            );
+          }
+          if (selectedTypes.length > 1) {
+            filteredData = filteredData.filter((laptop) =>
+              selectedTypes.includes(laptop.type)
+            );
+          }
+
+          setLaptops(filteredData);
+          setTotalPages(
+            Math.ceil((response.total || response.count || 0) / limit)
+          );
+          setTotalCount(response.total || response.count || 0);
+
+          // Clear selected items when data changes
+          setSelectedItems([]);
+        } else {
+          console.error("Unexpected API response format:", response);
+          setLaptops([]);
+          setTotalPages(1);
+          setTotalCount(0);
+        }
+      } catch (err) {
+        console.error("Error fetching laptops:", err);
+        setError("Failed to load laptops. Please try again.");
+        setLaptops([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLaptops();
+  }, [
+    currentPage,
+    limit,
+    searchTerm,
+    selectedBrands,
+    selectedTypes,
+    sortBy,
+    priceRange,
+    deleteSuccess,
+  ]);
 
   // Extract unique brands and types for filters
   const brands = [...new Set(laptops.map((laptop) => laptop.brand))];
@@ -170,6 +183,7 @@ const LaptopManagement = () => {
     } else {
       setSelectedBrands([...selectedBrands, brand]);
     }
+    setCurrentPage(1); // Reset to first page when filter changes
   };
 
   const handleTypeFilter = (type) => {
@@ -178,6 +192,7 @@ const LaptopManagement = () => {
     } else {
       setSelectedTypes([...selectedTypes, type]);
     }
+    setCurrentPage(1); // Reset to first page when filter changes
   };
 
   const clearFilters = () => {
@@ -185,11 +200,12 @@ const LaptopManagement = () => {
     setSelectedBrands([]);
     setSelectedTypes([]);
     setPriceRange({ min: "", max: "" });
+    setCurrentPage(1);
   };
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      setSelectedItems(filteredLaptops.map((laptop) => laptop.id));
+      setSelectedItems(laptops.map((laptop) => laptop._id || laptop.id));
     } else {
       setSelectedItems([]);
     }
@@ -208,19 +224,41 @@ const LaptopManagement = () => {
     setConfirmDelete(true);
   };
 
-  const handleDeleteConfirm = () => {
-    if (itemToDelete) {
-      // Single item delete
-      setLaptops(laptops.filter((laptop) => laptop.id !== itemToDelete));
-    } else if (selectedItems.length > 0) {
-      // Bulk delete
-      setLaptops(
-        laptops.filter((laptop) => !selectedItems.includes(laptop.id))
-      );
-      setSelectedItems([]);
+  const handleDeleteConfirm = async () => {
+    setIsDeleting(true);
+    try {
+      if (itemToDelete) {
+        // Single item delete
+        await apiService.deleteLaptop(itemToDelete);
+        setLaptops(
+          laptops.filter((laptop) => (laptop._id || laptop.id) !== itemToDelete)
+        );
+        toast.success("Laptop deleted successfully");
+      } else if (selectedItems.length > 0) {
+        // Bulk delete - assuming your API supports this
+        // If not, you'll need to loop through and delete one by one
+        for (const id of selectedItems) {
+          await apiService.deleteLaptop(id);
+        }
+        setLaptops(
+          laptops.filter(
+            (laptop) => !selectedItems.includes(laptop._id || laptop.id)
+          )
+        );
+        toast.success(`${selectedItems.length} laptops deleted successfully`);
+        setSelectedItems([]);
+      }
+      setDeleteSuccess(true);
+      setTimeout(() => setDeleteSuccess(false), 3000);
+    } catch (err) {
+      console.error("Error deleting laptop(s):", err);
+      setError("Failed to delete laptop(s). Please try again.");
+      toast.error("Failed to delete laptop(s)");
+    } finally {
+      setIsDeleting(false);
+      setConfirmDelete(false);
+      setItemToDelete(null);
     }
-    setConfirmDelete(false);
-    setItemToDelete(null);
   };
 
   const handleDeleteCancel = () => {
@@ -228,61 +266,13 @@ const LaptopManagement = () => {
     setItemToDelete(null);
   };
 
-  // Apply all filters and sorting
-  const filteredLaptops = laptops
-    .filter((laptop) => {
-      // Search filter
-      if (
-        searchTerm &&
-        !laptop.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        !laptop.brand.toLowerCase().includes(searchTerm.toLowerCase())
-      ) {
-        return false;
-      }
+  // Export function (placeholder)
+  const handleExport = () => {
+    toast.info("Export functionality would go here");
+    // In a real implementation, you would generate a CSV or Excel file
+  };
 
-      // Brand filter
-      if (selectedBrands.length > 0 && !selectedBrands.includes(laptop.brand)) {
-        return false;
-      }
-
-      // Type filter
-      if (selectedTypes.length > 0 && !selectedTypes.includes(laptop.type)) {
-        return false;
-      }
-
-      // Price range filter
-      if (priceRange.min && laptop.price < parseFloat(priceRange.min)) {
-        return false;
-      }
-      if (priceRange.max && laptop.price > parseFloat(priceRange.max)) {
-        return false;
-      }
-
-      return true;
-    })
-    .sort((a, b) => {
-      // Sort based on selected option
-      switch (sortBy) {
-        case "name":
-          return a.name.localeCompare(b.name);
-        case "price-low":
-          return a.price - b.price;
-        case "price-high":
-          return b.price - a.price;
-        case "stock-low":
-          return a.stock - b.stock;
-        case "stock-high":
-          return b.stock - a.stock;
-        case "newest":
-          return new Date(b.createdAt) - new Date(a.createdAt);
-        case "oldest":
-          return new Date(a.createdAt) - new Date(b.createdAt);
-        default:
-          return 0;
-      }
-    });
-
-  if (isLoading) {
+  if (isLoading && !laptops.length) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="animate-pulse">
@@ -313,6 +303,38 @@ const LaptopManagement = () => {
         </div>
       </div>
 
+      {/* Success message */}
+      {deleteSuccess && (
+        <div className="mb-6 bg-green-50 border-l-4 border-green-400 p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <Check className="h-5 w-5 text-green-400" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-green-700">
+                {itemToDelete
+                  ? "Laptop was successfully deleted."
+                  : "Selected laptops were successfully deleted."}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error message */}
+      {error && (
+        <div className="mb-6 bg-red-50 border-l-4 border-red-400 p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <AlertCircle className="h-5 w-5 text-red-400" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Filters and Actions */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 mb-6">
@@ -322,7 +344,10 @@ const LaptopManagement = () => {
               <input
                 type="text"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
                 placeholder="Search laptops by name or brand..."
               />
@@ -368,7 +393,10 @@ const LaptopManagement = () => {
                 </select>
               </div>
             </div>
-            <button className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+            <button
+              onClick={handleExport}
+              className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+            >
               <Download className="h-4 w-4 mr-2" />
               Export
             </button>
@@ -483,7 +511,10 @@ const LaptopManagement = () => {
                 <Trash2 className="h-4 w-4 mr-1" />
                 Delete Selected
               </button>
-              <button className="inline-flex items-center px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+              <button
+                onClick={handleExport}
+                className="inline-flex items-center px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              >
                 <Download className="h-4 w-4 mr-1" />
                 Export Selected
               </button>
@@ -493,7 +524,7 @@ const LaptopManagement = () => {
 
         {/* Results Summary */}
         <div className="mt-4 text-sm text-gray-500">
-          Showing {filteredLaptops.length} of {laptops.length} laptops
+          Showing {laptops.length} of {totalCount} laptops
           {(selectedBrands.length > 0 ||
             selectedTypes.length > 0 ||
             priceRange.min ||
@@ -503,7 +534,7 @@ const LaptopManagement = () => {
       </div>
 
       {/* Laptops Grid */}
-      {filteredLaptops.length > 0 ? (
+      {laptops.length > 0 ? (
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 bg-white shadow-md rounded-lg">
             <thead className="bg-gray-50">
@@ -516,8 +547,8 @@ const LaptopManagement = () => {
                     <input
                       type="checkbox"
                       checked={
-                        selectedItems.length === filteredLaptops.length &&
-                        filteredLaptops.length > 0
+                        selectedItems.length === laptops.length &&
+                        laptops.length > 0
                       }
                       onChange={handleSelectAll}
                       className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
@@ -563,14 +594,18 @@ const LaptopManagement = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredLaptops.map((laptop) => (
-                <tr key={laptop.id} className="hover:bg-gray-50">
+              {laptops.map((laptop) => (
+                <tr key={laptop._id || laptop.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <input
                         type="checkbox"
-                        checked={selectedItems.includes(laptop.id)}
-                        onChange={() => handleSelectItem(laptop.id)}
+                        checked={selectedItems.includes(
+                          laptop._id || laptop.id
+                        )}
+                        onChange={() =>
+                          handleSelectItem(laptop._id || laptop.id)
+                        }
                         className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
                       />
                     </div>
@@ -580,8 +615,17 @@ const LaptopManagement = () => {
                       <div className="h-10 w-10 flex-shrink-0">
                         <img
                           className="h-10 w-10 rounded-md object-cover"
-                          src={laptop.image}
+                          src={
+                            laptop.images && laptop.images.length > 0
+                              ? getImageUrl(laptop.images[0])
+                              : PLACEHOLDER_IMAGE
+                          }
                           alt={laptop.name}
+                          onError={(e) => {
+                            console.error("Image load error:", e.target.src);
+                            e.target.src = PLACEHOLDER_IMAGE;
+                            e.target.onerror = null;
+                          }}
                         />
                       </div>
                       <div className="ml-4">
@@ -597,17 +641,22 @@ const LaptopManagement = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900 flex items-center">
                       <Cpu className="h-4 w-4 text-gray-400 mr-1" />
-                      {laptop.processor}
+                      {laptop.processor || "N/A"}
                     </div>
                     <div className="text-sm text-gray-500 flex items-center">
                       <HardDrive className="h-4 w-4 text-gray-400 mr-1" />
-                      {laptop.ram} • {laptop.storage}
+                      {laptop.ram || "N/A"} • {laptop.storage || "N/A"}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
-                      ${laptop.price.toFixed(2)}
+                      ${laptop.price ? laptop.price.toFixed(2) : "0.00"}
                     </div>
+                    {laptop.discountPrice && (
+                      <div className="text-sm line-through text-gray-500">
+                        ${laptop.discountPrice.toFixed(2)}
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div
@@ -615,7 +664,7 @@ const LaptopManagement = () => {
                         laptop.stock <= 5 ? "text-red-600" : "text-gray-900"
                       }`}
                     >
-                      {laptop.stock} units
+                      {laptop.stock || 0} units
                       {laptop.stock <= 5 && (
                         <div className="mt-1 flex items-center">
                           <AlertTriangle className="h-4 w-4 text-red-500 mr-1" />
@@ -625,30 +674,34 @@ const LaptopManagement = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(laptop.updatedAt).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
+                    {laptop.updatedAt
+                      ? new Date(laptop.updatedAt).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })
+                      : "N/A"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end space-x-2">
                       <Link
-                        to={`/order/${laptop.id}`}
+                        to={`/order/${laptop._id || laptop.id}`}
                         className="text-gray-600 hover:text-gray-900"
                         title="View Laptop"
                       >
                         <Eye className="h-5 w-5" />
                       </Link>
                       <Link
-                        to={`/admin/laptops/edit/${laptop.id}`}
-                        className="text-blue-600 hover:text-blue-900"
+                        to={`/admin/laptops/edit/${laptop._id || laptop.id}`}
+                        className="text-orange-600 hover:text-orange-900"
                         title="Edit Laptop"
                       >
                         <Edit className="h-5 w-5" />
                       </Link>
                       <button
-                        onClick={() => handleDeletePrompt(laptop.id)}
+                        onClick={() =>
+                          handleDeletePrompt(laptop._id || laptop.id)
+                        }
                         className="text-red-600 hover:text-red-900"
                         title="Delete Laptop"
                       >
@@ -711,6 +764,109 @@ const LaptopManagement = () => {
         </div>
       )}
 
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-5 flex items-center justify-between">
+          <div className="flex-1 flex justify-between sm:hidden">
+            <button
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() =>
+                setCurrentPage(Math.min(totalPages, currentPage + 1))
+              }
+              disabled={currentPage === totalPages}
+              className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm text-gray-700">
+                Showing {laptops.length > 0 ? (currentPage - 1) * limit + 1 : 0}{" "}
+                to{" "}
+                <span className="font-medium">
+                  {Math.min(currentPage * limit, totalCount)}
+                </span>{" "}
+                of <span className="font-medium">{totalCount}</span> results
+              </p>
+            </div>
+            <div>
+              <nav
+                className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                aria-label="Pagination"
+              >
+                <button
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  <span className="sr-only">Previous</span>
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+
+                {/* Show limited page numbers with ellipsis for large page counts */}
+                {[...Array(totalPages)].map((_, i) => {
+                  // Always show first, last, and pages around current
+                  const pageIndex = i + 1;
+                  const show =
+                    pageIndex === 1 ||
+                    pageIndex === totalPages ||
+                    (pageIndex >= currentPage - 1 &&
+                      pageIndex <= currentPage + 1);
+
+                  // Show ellipsis instead of distant pages
+                  if (!show) {
+                    // Show ellipsis only once for each gap
+                    if (pageIndex === 2 || pageIndex === totalPages - 1) {
+                      return (
+                        <span
+                          key={i}
+                          className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
+                        >
+                          ...
+                        </span>
+                      );
+                    }
+                    return null;
+                  }
+
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentPage(pageIndex)}
+                      className={`relative inline-flex items-center px-4 py-2 border ${
+                        currentPage === pageIndex
+                          ? "z-10 bg-orange-50 border-orange-500 text-orange-600"
+                          : "border-gray-300 bg-white text-gray-500 hover:bg-gray-50"
+                      } text-sm font-medium`}
+                    >
+                      {pageIndex}
+                    </button>
+                  );
+                })}
+
+                <button
+                  onClick={() =>
+                    setCurrentPage(Math.min(totalPages, currentPage + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  <span className="sr-only">Next</span>
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </nav>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Confirmation Modal */}
       {confirmDelete && (
         <div className="fixed z-10 inset-0 overflow-y-auto">
@@ -753,14 +909,42 @@ const LaptopManagement = () => {
                 <button
                   type="button"
                   onClick={handleDeleteConfirm}
-                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
+                  disabled={isDeleting}
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
                 >
-                  Delete
+                  {isDeleting ? (
+                    <>
+                      <svg
+                        className="animate-spin -ml-1 mr-2 h-5 w-5 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Deleting...
+                    </>
+                  ) : (
+                    "Delete"
+                  )}
                 </button>
                 <button
                   type="button"
                   onClick={handleDeleteCancel}
-                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  disabled={isDeleting}
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
                 >
                   Cancel
                 </button>

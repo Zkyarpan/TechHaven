@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { roomService } from "../components/utils/api";
+import { roomService } from "./utils/apiService.jsx";
 import { getFullImageUrl, handleImageError } from "../components/utils/utils";
 import { toast } from "sonner";
 

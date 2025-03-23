@@ -1,127 +1,175 @@
-const mongoose = require('mongoose');
-const slugify = require('slugify');
+const mongoose = require("mongoose");
+const slugify = require("slugify");
 
-const LaptopSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, 'Please add a laptop name'],
-    trim: true,
-    maxlength: [100, 'Name cannot be more than 100 characters']
+const laptopSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, "Please add a name"],
+      trim: true,
+      maxlength: [100, "Name cannot be more than 100 characters"],
+    },
+    slug: {
+      type: String,
+      unique: true,
+    },
+    brand: {
+      type: String,
+      required: [true, "Please add a brand"],
+      trim: true,
+    },
+    type: {
+      type: String,
+      trim: true,
+    },
+    processor: {
+      type: String,
+      trim: true,
+    },
+    ram: {
+      type: String,
+      trim: true,
+    },
+    storage: {
+      type: String,
+      trim: true,
+    },
+    graphics: {
+      type: String,
+      trim: true,
+    },
+    display: {
+      type: String,
+      trim: true,
+    },
+    resolution: {
+      type: String,
+      trim: true,
+    },
+    battery: {
+      type: String,
+      trim: true,
+    },
+    connectivity: {
+      type: String,
+      trim: true,
+    },
+    ports: {
+      type: String,
+      trim: true,
+    },
+    weight: {
+      type: String,
+      trim: true,
+    },
+    dimensions: {
+      type: String,
+      trim: true,
+    },
+    operatingSystem: {
+      type: String,
+      trim: true,
+    },
+    color: {
+      type: String,
+      trim: true,
+    },
+    price: {
+      type: Number,
+      required: [true, "Please add a price"],
+      min: [0.01, "Price must be greater than 0"],
+    },
+    discountPrice: {
+      type: Number,
+      min: [0, "Discount price cannot be negative"],
+    },
+    stock: {
+      type: Number,
+      required: [true, "Please add stock quantity"],
+      min: [0, "Stock cannot be negative"],
+      default: 10,
+    },
+    isAvailable: {
+      type: Boolean,
+      default: true,
+    },
+    features: {
+      type: [String],
+    },
+    images: {
+      type: [String],
+    },
+    description: {
+      type: String,
+      trim: true,
+    },
+    rating: {
+      type: Number,
+      min: 0,
+      max: 5,
+      default: 0,
+    },
+    numReviews: {
+      type: Number,
+      default: 0,
+    },
+    reviews: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Review",
+      },
+    ],
+    isFeatured: {
+      type: Boolean,
+      default: false,
+    },
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+    },
+    warrantyOptions: [
+      {
+        id: String,
+        name: String,
+        duration: String,
+        price: Number,
+        coverage: String,
+      },
+    ],
+    shippingOptions: [
+      {
+        id: String,
+        name: String,
+        duration: String,
+        price: Number,
+      },
+    ],
   },
-  slug: String,
-  brand: {
-    type: String,
-    required: [true, 'Please specify the brand'],
-    enum: ['Apple', 'Dell', 'HP', 'Lenovo', 'ASUS', 'Acer', 'Microsoft', 'Razer', 'MSI', 'Samsung', 'Other']
-  },
-  type: {
-    type: String,
-    required: [true, 'Please specify the laptop type'],
-    enum: ['Ultrabook', '2-in-1', 'Gaming', 'Budget', 'Business', 'Chromebook', 'Workstation']
-  },
-  processor: {
-    type: String,
-    required: [true, 'Please specify the processor']
-  },
-  ram: {
-    type: String,
-    required: [true, 'Please specify the RAM']
-  },
-  storage: {
-    type: String,
-    required: [true, 'Please specify the storage']
-  },
-  graphics: String,
-  display: {
-    type: String,
-    required: [true, 'Please specify the display']
-  },
-  resolution: String,
-  battery: String,
-  connectivity: String,
-  ports: String,
-  weight: String,
-  dimensions: String,
-  operatingSystem: String,
-  color: String,
-  price: {
-    type: Number,
-    required: [true, 'Please add a price'],
-    min: [0, 'Price must be positive']
-  },
-  discountPrice: {
-    type: Number,
-    min: [0, 'Discount price must be positive']
-  },
-  stock: {
-    type: Number,
-    required: [true, 'Please add stock quantity'],
-    min: [0, 'Stock cannot be negative']
-  },
-  isAvailable: {
-    type: Boolean,
-    default: true
-  },
-  features: {
-    type: [String],
-    required: [true, 'Please add at least one feature']
-  },
-  images: {
-    type: [String],
-    required: [true, 'Please add at least one image']
-  },
-  description: {
-    type: String,
-    required: [true, 'Please add a description']
-  },
-  category: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Category'
-  },
-  averageRating: {
-    type: Number,
-    min: [1, 'Rating must be at least 1'],
-    max: [5, 'Rating cannot be more than 5']
-  },
-  numReviews: {
-    type: Number,
-    default: 0
-  },
-  isFeatured: {
-    type: Boolean,
-    default: false
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
-}, {
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
-});
+);
 
-// Create laptop slug from name
-LaptopSchema.pre('save', function(next) {
-  this.slug = slugify(this.name, { lower: true });
+// Create laptop slug from the name
+laptopSchema.pre("save", function (next) {
+  if (!this.slug || this.isModified("name")) {
+    this.slug = slugify(this.name, { lower: true });
+  }
+
+  // IMPORTANT: Always ensure isAvailable is correctly set based on stock
+  this.isAvailable = this.stock > 0;
+
   next();
 });
 
-// Cascade delete reviews when a laptop is deleted
-LaptopSchema.pre('remove', async function(next) {
-  await this.model('Review').deleteMany({ laptop: this._id });
-  next();
+// Add index for better search performance
+laptopSchema.index({
+  name: "text",
+  brand: "text",
+  description: "text",
+  processor: "text",
 });
 
-// Reverse populate with virtuals
-LaptopSchema.virtual('reviews', {
-  ref: 'Review',
-  localField: '_id',
-  foreignField: 'laptop',
-  justOne: false
-});
-
-module.exports = mongoose.model('Laptop', LaptopSchema);
+module.exports = mongoose.model("Laptop", laptopSchema);
